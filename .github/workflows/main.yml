@@ -16,13 +16,14 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
+      # Zip file ko perfectly extract karne ke liye
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # Yeh step aapki corrupt gradle file ko hatakar nayi fresh file banayega
+      # Fresh wrapper generator bina kisi purani corrupt file ke
       - name: Fix Corrupt Gradle Wrapper
         run: |
           cd extracted_project
@@ -35,10 +36,11 @@ jobs:
           chmod +x gradlew
         continue-on-error: true
 
+      # Is baar hum --no-configuration-cache flag use kar rahe hain taaki jar file wala error na aaye
       - name: Build APK with Gradle
         run: |
           cd extracted_project
-          ./gradlew assembleDebug
+          ./gradlew assembleDebug --no-configuration-cache --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
