@@ -1,0 +1,40 @@
+name: Build APK from Zip
+
+on:
+  workflow_dispatch: # Isse aap manually button daba kar build start kar sakte hain
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      # Yeh step aapki zip file ko automatic unzip karega cloud par
+      - name: Unzip Project
+        run: |
+          unzip *.zip -d project_folder
+          cd project_folder
+          # Agar zip ke andar ek aur folder hai, to usme move karne ke liye
+          if [ -f gradlew ]; then echo "Root me h"; else cd * && cp -r . ../ && cd ..; fi
+
+      - name: Grant execute permission for gradlew
+        run: chmod +x gradlew
+        continue-on-error: true
+
+      - name: Build APK
+        run: ./gradlew assembleDebug
+        continue-on-error: true
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-debug
+          path: '**/build/outputs/apk/debug/*.apk'
+          
