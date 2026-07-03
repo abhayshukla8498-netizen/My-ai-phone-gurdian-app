@@ -10,34 +10,36 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # Java 17 setup
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # Zip file ko perfectly extract karne ke liye
+      # Android SDK setup (Yeh aapke environment ko automatic standard studio jaisa bana dega)
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # Zip file extraction (bina kisi name conflict ke)
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # Fresh wrapper generator bina kisi purani corrupt file ke
-      - name: Fix Corrupt Gradle Wrapper
+      # Purani corrupt files ko hatana
+      - name: Clean Gradle Wrapper Files
         run: |
           cd extracted_project
-          rm -f gradle/wrapper/gradle-wrapper.jar
-          gradle wrapper --gradle-version 8.2
+          rm -rf .gradle gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties
 
-      # Is baar hum Gradle ki cache directory hi badal rahe hain taaki jar corruption error aaye hi na
-      - name: Build APK with Clean Cache
+      # Is baar hum standard command ka use karenge bina custom user_home ke, jo environment ko handle karega
+      - name: Build APK with Production Command
         run: |
           cd extracted_project
           chmod +x gradlew
-          mkdir -p custom_gradle_user_home
-          export GRADLE_USER_HOME=$(pwd)/custom_gradle_user_home
-          ./gradlew clean assembleDebug --no-configuration-cache --no-daemon
+          ./gradlew assembleDebug --stacktrace
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
