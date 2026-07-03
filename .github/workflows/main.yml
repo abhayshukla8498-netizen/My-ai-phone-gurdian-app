@@ -30,17 +30,14 @@ jobs:
           rm -f gradle/wrapper/gradle-wrapper.jar
           gradle wrapper --gradle-version 8.2
 
-      - name: Grant execute permission for gradlew
+      # Is baar hum Gradle ki cache directory hi badal rahe hain taaki jar corruption error aaye hi na
+      - name: Build APK with Clean Cache
         run: |
           cd extracted_project
           chmod +x gradlew
-        continue-on-error: true
-
-      # Is baar hum --no-configuration-cache flag use kar rahe hain taaki jar file wala error na aaye
-      - name: Build APK with Gradle
-        run: |
-          cd extracted_project
-          ./gradlew assembleDebug --no-configuration-cache --no-daemon
+          mkdir -p custom_gradle_user_home
+          export GRADLE_USER_HOME=$(pwd)/custom_gradle_user_home
+          ./gradlew clean assembleDebug --no-configuration-cache --no-daemon
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
