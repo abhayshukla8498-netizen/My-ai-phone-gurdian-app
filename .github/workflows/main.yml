@@ -10,36 +10,36 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # 1. Java environment setup karna
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # 2. Zip file ko perfectly extract karna
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 1. Zip file ko perfectly extract karna
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # 3. Corrupt wrapper folders ko poori tarah jadd se delete karna
-      - name: Force Remove Corrupt Wrapper Files
+      # 2. SIRF aur SIRF corrupt jar file ko hatana (Baki references ko safe rakhna)
+      - name: Carefully Remove Only Corrupt Jar File
         run: |
           cd extracted_project
-          rm -rf gradle/
-          rm -f gradlew
-          rm -f gradlew.bat
+          rm -f gradle/wrapper/gradle-wrapper.jar
           rm -rf .gradle
 
-      # 4. Global system gradle se direct bina wrapper ke build karna
+      # 3. System gradle se build karna bina kisi reference error ke
       - name: Build APK Directly with System Gradle
         run: |
           cd extracted_project
           gradle assembleDebug --no-daemon
 
-      # 5. Final APK ko nikalna
+      # 4. Final APK ko nikalna
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
