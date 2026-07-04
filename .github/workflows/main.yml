@@ -16,33 +16,16 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
-      # 1. Zip file ko extract karna
+      # Zip file ko extract karna
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # 2. Kisi bhi purani corrupt wrapper file ko delete karna
-      - name: Remove Corrupt Wrapper Files
-        run: |
-          cd extracted_project
-          rm -rf gradle/wrapper/gradle-wrapper.jar
-          rm -rf .gradle
-
-      # 3. System ke fresh gradle se build karna (Bina wrapper ke)
-      - name: Build APK with Pre-installed Gradle
-        run: |
-          cd extracted_project
-          gradle assembleDebug --no-daemon --stacktrace
-
-      # 4. APK ko upload karna taaki aap download kar sakein
-      - name: Upload APK Artifact
-        uses: actions/upload-artifact@v4
+      # Sabse professional aur foolproof build automation tool ka use karna
+      - name: Run Android Build Action
+        uses: gradle/gradle-build-action@v3
         with:
-          name: Abhay-AI-Debug-APK
-          path: 'extracted_project/**/build/outputs/apk/debug/*.apk'
-          
+          build-root-directory: extracted_project
+          arguments: assembleDebug --no-configuration-cache --no-daemon
