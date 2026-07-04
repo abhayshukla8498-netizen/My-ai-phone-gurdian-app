@@ -16,9 +16,6 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      - name: Setup Android SDK
-        uses: android-actions/setup-android@v3
-
       # 1. Zip file ko perfectly extract karna
       - name: Unzip Project Perfectly
         run: |
@@ -26,24 +23,24 @@ jobs:
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # 2. Corrupt jar hatana par baaki files safe rakhna
+      # 2. Corrupt wrapper file hatana aur baaki sab safe rakhna
       - name: Carefully Remove Only Corrupt Jar File
         run: |
           cd extracted_project
           rm -f gradle/wrapper/gradle-wrapper.jar
           rm -rf .gradle
 
-      # 3. Ek naya fresh debug keystore automatic generate karna taaki signing error na aaye
-      - name: Generate Fresh Debug Keystore
+      # 3. Direct project folder ke andar debug.keystore generate karna
+      - name: Generate Custom Debug Keystore
         run: |
-          mkdir -p ~/.android
-          keytool -genkey -v -keystore ~/.android/debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          cd extracted_project
+          keytool -genkey -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
 
-      # 4. System gradle se build karna bina kisi signing block ke
+      # 4. Gradle ko custom keystore path dene ke liye force karna aur build karna
       - name: Build APK Directly with System Gradle
         run: |
           cd extracted_project
-          gradle assembleDebug --no-daemon
+          gradle assembleDebug -Pandroid.injected.signing.store.file=$(pwd)/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android --no-daemon
 
       # 5. Final APK ko nikalna
       - name: Upload APK Artifact
