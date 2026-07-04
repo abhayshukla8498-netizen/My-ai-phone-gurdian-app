@@ -10,39 +10,39 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
-      # Java 17 setup
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # Android SDK setup (Yeh aapke environment ko automatic standard studio jaisa bana dega)
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      # Zip file extraction (bina kisi name conflict ke)
+      # 1. Zip file ko extract karna
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # Purani corrupt files ko hatana
-      - name: Clean Gradle Wrapper Files
+      # 2. Kisi bhi purani corrupt wrapper file ko delete karna
+      - name: Remove Corrupt Wrapper Files
         run: |
           cd extracted_project
-          rm -rf .gradle gradle/wrapper/gradle-wrapper.jar gradle/wrapper/gradle-wrapper.properties
+          rm -rf gradle/wrapper/gradle-wrapper.jar
+          rm -rf .gradle
 
-      # Is baar hum standard command ka use karenge bina custom user_home ke, jo environment ko handle karega
-      - name: Build APK with Production Command
+      # 3. System ke fresh gradle se build karna (Bina wrapper ke)
+      - name: Build APK with Pre-installed Gradle
         run: |
           cd extracted_project
-          chmod +x gradlew
-          ./gradlew assembleDebug --stacktrace
+          gradle assembleDebug --no-daemon --stacktrace
 
+      # 4. APK ko upload karna taaki aap download kar sakein
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: Abhay-AI-Debug-APK
           path: 'extracted_project/**/build/outputs/apk/debug/*.apk'
+          
