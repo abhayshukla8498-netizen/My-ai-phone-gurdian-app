@@ -10,22 +10,38 @@ jobs:
       - name: Checkout Code
         uses: actions/checkout@v4
 
+      # 1. Java environment setup karna
       - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
           distribution: 'zulu'
           java-version: '17'
 
-      # Zip file ko extract karna
+      # 2. Zip file ko perfectly extract karna
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
           echo "Unzip completed successfully."
 
-      # Sabse professional aur foolproof build automation tool ka use karna
-      - name: Run Android Build Action
-        uses: gradle/gradle-build-action@v3
+      # 3. Corrupt wrapper folders ko poori tarah jadd se delete karna
+      - name: Force Remove Corrupt Wrapper Files
+        run: |
+          cd extracted_project
+          rm -rf gradle/
+          rm -f gradlew
+          rm -f gradlew.bat
+          rm -rf .gradle
+
+      # 4. Global system gradle se direct bina wrapper ke build karna
+      - name: Build APK Directly with System Gradle
+        run: |
+          cd extracted_project
+          gradle assembleDebug --no-daemon
+
+      # 5. Final APK ko nikalna
+      - name: Upload APK Artifact
+        uses: actions/upload-artifact@v4
         with:
-          build-root-directory: extracted_project
-          arguments: assembleDebug --no-configuration-cache --no-daemon
+          name: Abhay-AI-Debug-APK
+          path: 'extracted_project/**/build/outputs/apk/debug/*.apk'
