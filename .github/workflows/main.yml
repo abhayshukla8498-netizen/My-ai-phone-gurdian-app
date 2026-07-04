@@ -1,4 +1,4 @@
-name: Build APK from Zip
+name: Build Signed Release APK
 
 on:
   workflow_dispatch:
@@ -16,35 +16,42 @@ jobs:
           distribution: 'zulu'
           java-version: '17'
 
-      # 1. Zip file ko perfectly extract karna
+      - name: Setup Android SDK
+        uses: android-actions/setup-android@v3
+
+      # 1. Zip file ko extract karna
       - name: Unzip Project Perfectly
         run: |
           mkdir -p extracted_project
           unzip -o "*.zip" -d extracted_project
-          echo "Unzip completed successfully."
 
-      # 2. Corrupt wrapper file hatana aur baaki sab safe rakhna
+      # 2. Corrupt jar hatana par baaki files safe rakhna
       - name: Carefully Remove Only Corrupt Jar File
         run: |
           cd extracted_project
           rm -f gradle/wrapper/gradle-wrapper.jar
           rm -rf .gradle
 
-      # 3. Direct project folder ke andar debug.keystore generate karna
-      - name: Generate Custom Debug Keystore
+      # 3. Cloud par hi Samsung Store ke liye Real Release Key generate karna
+      - name: Generate Production Release Keystore
         run: |
           cd extracted_project
-          keytool -genkey -v -keystore debug.keystore -storepass android -keypass android -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Android Debug,O=Android,C=US"
+          keytool -genkey -v -keystore release.jks -storepass ${{ secrets.KEYSTORE_PASSWORD }} -alias ${{ secrets.KEY_ALIAS }} -keypass ${{ secrets.KEY_PASSWORD }} -keyalg RSA -keysize 2048 -validity 10000 -dname "CN=Abhay Shukla,O=AbhayAI,C=IN"
 
-      # 4. Gradle ko custom keystore path dene ke liye force karna aur build karna
-      - name: Build APK Directly with System Gradle
+      # 4. Release APK build karna automatic signing ke sath
+      - name: Build Signed Release APK
         run: |
           cd extracted_project
-          gradle assembleDebug -Pandroid.injected.signing.store.file=$(pwd)/debug.keystore -Pandroid.injected.signing.store.password=android -Pandroid.injected.signing.key.alias=androiddebugkey -Pandroid.injected.signing.key.password=android --no-daemon
+          gradle assembleRelease \
+            -Pandroid.injected.signing.store.file=$(pwd)/release.jks \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }} \
+            --no-daemon
 
-      # 5. Final APK ko nikalna
-      - name: Upload APK Artifact
+      # 5. Final Signed APK ko upload karna
+      - name: Upload Signed Release APK
         uses: actions/upload-artifact@v4
         with:
-          name: Abhay-AI-Debug-APK
-          path: 'extracted_project/**/build/outputs/apk/debug/*.apk'
+          name: Abhay-AI-Samsung-Release-APK
+          path: 'extracted_project/**/build/outputs/apk/release/*.apk'
